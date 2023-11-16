@@ -49,6 +49,10 @@ int processTableSize;
 int runningChildren;
 //Output file
 FILE *fptr;
+//Shared memory variables
+int sh_key;
+int shm_id;
+int *shm_ptr;
 
 // FUNCTION PROTOTYPES
 //Help function
@@ -85,19 +89,27 @@ void calculateEventTime(pid_t process, int entry);
 double priorityArithmetic(int currentEntry);
 void checkTime(int *outputTimer);
 
-/*
-
-TODO
-* Change all 'exit' calls to 'terminateProgram(6)
-* Update readme
-* Only output 10k lines to logfile
-
-*/
 int main(int argc, char** argv) {
 	//signals to terminate program properly if user hits ctrl+c or 60 seconds pass
 	alarm(60);
 	signal(SIGALRM, sighandler);
 	signal(SIGINT, sighandler);	
+
+	//allocate shared memory
+	sh_key = ftok("./oss.c", 0);
+	shm_id = shmget(sh_key, sizeof(int) * 2, IPC_CREAT | 0666);
+	if(shm_id <= 0) {
+		printf("Shared memory allocation failed\n");
+		exit(1);
+	}
+
+	//attach to shared memory
+	int *shm_ptr;
+	shm_ptr = shmat(shm_id, 0 ,0);
+	if(shm_ptr <= 0) {
+		printf("Attaching to shared memory failed\n");
+		exit(1);
+	}
 
 	//set clock to zero
     simulatedClock[0] = 0;
@@ -481,6 +493,10 @@ void terminateProgram(int signum) {
 
 	//close the log file
 	fclose(fptr);
+
+	//detach from and delete memory
+	shmdt(shm_ptr);
+	shmctl(shm_id, IPC_RMID, NULL);
 
 	printf("Program is terminating. Goodbye!\n");
 	exit(1);
