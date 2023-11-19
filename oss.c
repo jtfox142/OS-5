@@ -238,7 +238,7 @@ int main(int argc, char** argv) {
 
 		//outputs the process table to a log file and the screen every half second
 		//and runs a deadlock detection algorithm every second
-		checkTime(outputTimer, deadlockDetectionTimer);
+		//checkTime(outputTimer, deadlockDetectionTimer);
 
 		incrementClock(STANDARD_CLOCK_INCREMENT);
 	}
@@ -380,13 +380,13 @@ void sendMessage(pid_t childPid, int msg) {
 }
 
 void checkTime(int *outputTimer, int *deadlockDetectionTimer) {
-	if(abs(simulatedClock[1] - *outputTimer) >= HALF_SECOND){
+	if(simulatedClock[1] - *outputTimer >= HALF_SECOND){
 			*outputTimer = simulatedClock[1];
 			printf("\nOSS PID:%d SysClockS:%d SysClockNano:%d\n", getpid(), simulatedClock[0], simulatedClock[1]); 
 			outputProcessTable();
 			outputResourceTable();
 		}
-	if(abs(simulatedClock[0] - *deadlockDetectionTimer) >= ONE_SECOND) {
+	if(simulatedClock[0] - *deadlockDetectionTimer >= ONE_SECOND) {
 		*deadlockDetectionTimer = simulatedClock[0];
 		//runDeadlockDetection(); //TODO
 	}

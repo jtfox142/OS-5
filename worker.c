@@ -182,7 +182,7 @@ int main(int argc, char** argv) {
 		//make sure that we haven't already requested too many of that instance.
 		//If we have, then reroll for another resource.
 		if(buf.intData < REQUEST_CODE) {
-			while(!addRequest(resourceTracker, buf.intData)) {
+			while(!addRequest(resourceTracker, buf.intData)) { //TODO maybe stuck here
 				buf.intData = RNG(9, 0);
 			}
 		}
