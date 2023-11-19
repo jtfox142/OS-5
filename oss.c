@@ -457,7 +457,8 @@ void launchChild(int maxSimulChildren, int launchInterval, int *lastLaunchTime) 
 			initializePCB(newChild);
 			*lastLaunchTime = simulatedClock[1];
 			printf("Launching Child.\n");
-			outputTable();
+			outputProcessTable();
+			outputResourceTable();
 			runningChildren++;
 		}
 	}
