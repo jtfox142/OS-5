@@ -440,7 +440,6 @@ void launchChild(int maxSimulChildren, int launchInterval, int *lastLaunchTime) 
 	if((simulatedClock[1] - *lastLaunchTime) < launchInterval)
 		return;
 
-	printf("MASTER: Attempting to launch a new child.\n");
 	if(checkChildren(maxSimulChildren) && stillChildrenToLaunch()) {
 		pid_t newChild;
 		newChild = fork();
@@ -457,7 +456,7 @@ void launchChild(int maxSimulChildren, int launchInterval, int *lastLaunchTime) 
 		else {
 			initializePCB(newChild);
 			*lastLaunchTime = simulatedClock[1];
-			printf("Launching Child.\n");
+			printf("MASTER: Launching new child pid %d.\n", newChild);
 			outputProcessTable();
 			outputResourceTable();
 			runningChildren++;
