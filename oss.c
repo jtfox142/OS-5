@@ -300,7 +300,7 @@ void checkForMessages() {
 	msgBuffer rcvbuf;
 	if(msgrcv(msqid, &rcvbuf, sizeof(msgBuffer), 0, IPC_NOWAIT) == -1) {
    		if(errno == ENOMSG) {
-      		printf("Got no message so maybe do nothing?\n");
+      		//printf("Got no message so maybe do nothing?\n");
    		}
 		else {
 				printf("Got an error from msgrcv\n");
@@ -339,6 +339,7 @@ int release(pid_t childPid, int resourceNumber) {
 		processTable[entry].allocationVector[resourceNumber] -= 1;
 		printf("MASTER: Child pid %d has released an instance of resource %d\n", childPid, resourceNumber);
 		resourceTable[resourceNumber].availableInstances += 1;
+		sendMessage(childPid, 2);
 		return 1;
 	}
 	printf("MASTER: Child pid %d has attempted to release an instance of resource %d that it does not have\n", childPid, resourceNumber);
@@ -354,25 +355,22 @@ void grantResource(pid_t childPid, int resourceNumber, int processNumber) {
 		processTable[processNumber].allocationVector[resourceNumber] += 1;
 		processTable[processNumber].requestVector[resourceNumber] -= 1;
 		
-		buf.intData = 1;
-
 		printf("MASTER: Requested instance of resource %d to child pid %d has been granted.\n", resourceNumber, childPid);
-
-		if(msgsnd(msqid, &buf, sizeof(msgBuffer) - sizeof(long), 0) == -1) {
-			perror("msgsnd to child failed\n");
-			terminateProgram(6);
-		}
+		sendMessage(childPid, 1);
 	}
 	else {
-		buf.intData = 0;
-
 		printf("MASTER: Requested instance of resource %d to child pid %d could not be granted.\n", resourceNumber, childPid);
+		sendMessage(childPid, 0);
+	}
+}
 
-		if(msgsnd(msqid, &buf, sizeof(msgBuffer) - sizeof(long), 0) == -1) {
+void sendMessage(pid_t childPid, int msg) {
+	buf.intData = msg;
+	buf.mtype = childPid;
+	if(msgsnd(msqid, &buf, sizeof(msgBuffer) - sizeof(long), 0) == -1) {
 			perror("msgsnd to child failed\n");
 			terminateProgram(6);
 		}
-	}
 }
 
 void checkTime(int *outputTimer, int *deadlockDetectionTimer) {
