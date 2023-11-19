@@ -227,6 +227,8 @@ int main(int argc, char** argv) {
 		}
 	}
 
+
+	printf("WORKER %d: Error: exited loop. Now terminating.\n", myPid);
 	//detach from shared memory
 	shmdt(simulatedClock);
 	return EXIT_SUCCESS;
