@@ -234,7 +234,7 @@ int main(int argc, char** argv) {
 
 		printf("WORKER %d: Sending message of %d to master.\n", myPid, buf.intData);
 		//Tell parent what we want to do
-		if(msgsnd(msqid, &buf, sizeof(msgbuffer) - sizeof(long), 0) == -1) {
+		if(msgsnd(msqid, &buf, sizeof(msgbuffer), 0) == -1) {
 				printf("msgsnd to parent failed.\n");
 			exit(1);
 		}
