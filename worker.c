@@ -12,6 +12,9 @@
 #define REQUEST_CODE 10
 #define TERMINATION_CODE 21
 #define MILLISECOND_TIMER 250000000
+#define REQUEST 0
+#define RELEASE 1
+#define RESOURCE_INSTANCES 20
 
 typedef struct msgbuffer {
 	long mtype;
@@ -38,8 +41,41 @@ int RNG(int max, int min) {
 int decideAction() {
 	int choice = RNG(100, 0);
 	if(choice <= 65)
-		return RNG(9, 0);
-	return RNG(19, 10);
+		return REQUEST;
+	return RELEASE;
+}
+
+//Attempts to grab a random resource. If allocations/requests for that resource are maxed out, then it begins
+//decrementing until it finds a resource that isn't or has checked all the resources.
+int chooseRequestResource(struct resourceTracker *resourceTracker) {
+	int chosenResource = RNG(9, 0);
+	int remainingRequests = RESOURCE_INSTANCES - resourceTracker->allocations[chosenResource];
+	for(int count = 0; count < NUMBER_OF_RESOURCES; count++) {
+		if(resourceTracker->allocations[chosenResource] < 20 && resourceTracker->requests[chosenResource] < remainingRequests)
+			return chosenResource;
+		if(chosenResource > 0)
+			chosenResource--;
+		else
+			chosenResource = 9;
+	}
+	return -1;
+}
+
+//Attempts to release a random resource. If there are no allocated instances of the chosen resource, then it
+//begins decrementing until it finds an instance of a resource or it has checked all the resources.
+//If there are no resources to release, then it requests one instead (back in main).
+int chooseReleaseResource(struct resourceTracker *resourceTracker) {
+	int chosenResource = RNG(9, 0);
+	for(int count = 0; count < NUMBER_OF_RESOURCES; count++) {
+		if(resourceTracker->allocations[chosenResource] > 0)
+			return chosenResource;
+		if(chosenResource > 0)
+			chosenResource--;
+		else
+			chosenResource = 9;
+	}
+
+	return -1;
 }
 
 //Returns 1 if process should terminate
@@ -176,23 +212,23 @@ int main(int argc, char** argv) {
 		//Send message back to parent
 		buf.mtype = parentPid;
 		buf.childPid = myPid;
-		
-		buf.intData = decideAction(); //Returns a number between 0 and 19, inclusive. More likely to return 0-9
 
-		//If the worker is going to request a resource,
-		//make sure that we haven't already requested too many of that instance.
-		//If we have, then reroll for another resource.
-		if(buf.intData < REQUEST_CODE) {
-			printf("WORKER: might get stuck here\n"); //TODO remove
-			while(!addRequest(resourceTracker, buf.intData)) { //TODO maybe stuck here
-				buf.intData = RNG(9, 0);
+		int action = decideAction();
+
+		if(REQUEST == action) {
+			buf.intData = chooseRequestResource(resourceTracker);
+			if(buf.intData == -1) {
+				perror("WORKER detected deadlock before parent. Terminating\n");
+				exit(0);
 			}
 		}
-
-		//TODO Rework logic so that the returned action is never to release a resource that we don't have
-		if(buf.intData >= REQUEST_CODE && resourceTracker->allocations[buf.intData] < 1) {
-			printf("WORKER: continuing\n");
-			continue;
+		
+		if(RELEASE == action) {
+			//chooseReleaseResource returns the resource number. Add 10 to communicate that it is being released
+			buf.intData = chooseReleaseResource(resourceTracker) + REQUEST_CODE;
+			//If there are no resources to release, request one instead
+			if(buf.intData == -1)
+				buf.intData = chooseRequestResource(resourceTracker);
 		}
 
 		printf("WORKER %d: Sending message of %d to master.\n", myPid, buf.intData);
