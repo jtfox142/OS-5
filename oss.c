@@ -115,7 +115,6 @@ void childTerminated(pid_t terminatedChild);
 /* 
 
 TODO
-* Set process limit to 18 and enforce launching rules
 * Start deadlock detection algo (just alert and end)
 * Finish deadlock detection algo (decide which processes to terminate)
 

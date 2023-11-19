@@ -159,6 +159,7 @@ int main(int argc, char** argv) {
 			timer = simulatedClock[1];
 
 			if(terminate) {
+				printf("WORKER %d: Attempting to terminate.", myPid);
 				buf.intData = TERMINATION_CODE;
 				if(msgsnd(msqid, &buf, sizeof(msgbuffer) - sizeof(long), 0) == -1) {
 					printf("msgsnd to parent failed.\n");
@@ -173,35 +174,39 @@ int main(int argc, char** argv) {
 		//Send message back to parent
 		buf.mtype = parentPid;
 		buf.childPid = myPid;
-		int allowedAction;
-		allowedAction = 1;
-		while(allowedAction)
+		
 		buf.intData = decideAction(); //Returns a number between 0 and 19, inclusive. More likely to return 0-9
 
+		//If the worker is going to request a resource,
+		//make sure that we haven't already requested too many of that instance.
+		//If we have, then reroll for another resource.
 		if(buf.intData < REQUEST_CODE) {
 			while(!addRequest(resourceTracker, buf.intData)) {
-				buf.intData = decideAction();
+				buf.intData = RNG(9, 0);
 			}
 		}
 
+		//Tell parent what we want to do
 		if(msgsnd(msqid, &buf, sizeof(msgbuffer) - sizeof(long), 0) == -1) {
 				printf("msgsnd to parent failed.\n");
 			exit(1);
 		}
 
+		//Get message back from parent
 		msgbuffer rcvbuf;
 		if(msgrcv(msqid, &rcvbuf, sizeof(msgbuffer), myPid, 0) == -1) {
 			printf("msgrcv failure in child %d\n", myPid);
 			exit(1);
 		}	
 
+		//If our request was granted, turn the request into an allocation
 		if(1 == rcvbuf.intData) {
 			removeRequest(resourceTracker, buf.intData);
 			addAllocation(resourceTracker, buf.intData);
-		}
+		} //If the release was granted, remove the allocation
 		else if(2 == rcvbuf.intData) {
 			removeAllocation(resourceTracker, buf.intData);
-		}
+		} //If our request was denied go to "sleep" waiting on a message from parent
 		else {
 			do {
 				if(msgrcv(msqid, &rcvbuf, sizeof(msgbuffer), myPid, 0) == -1) {
