@@ -110,6 +110,7 @@ int childrenInSystem();
 int findTableIndex(pid_t pid);
 void checkTime(int *outputTimer, int *deadlockDetectionTimer);
 void takeAction(pid_t childPid, int msgData);
+void childTerminated(pid_t terminatedChild);
 
 /* 
 
@@ -282,12 +283,18 @@ void nonblockWait() {
 	if(terminatedChild <= 0)
 		return;
 
+	childTerminated(terminatedChild);
+}
+
+void childTerminated(pid_t terminatedChild) {
 	for(int count = 0; count < RESOURCE_TABLE_SIZE; count++) {
 		while(release(terminatedChild, count));
 	}
 
 	processEnded(terminatedChild);//TODO reset checkChildren to test for occupied status and do away with runningChildren
 	runningChildren--;
+	printf("MASTER: Child pid %d has terminated and its resources have been released.\n", terminatedChild);
+	//TODO: output to logfile that child terminated
 }
 
 void checkForMessages() {
@@ -317,7 +324,7 @@ void takeAction(pid_t childPid, int msgData) {
 		release(childPid, (msgData - RESOURCE_TABLE_SIZE)); //msgData will come back as the resource number + 10
 		return;
 	}
-	childTerminated(childPid); //TODO: Output to logfile that child has terminated, release resources
+	childTerminated(childPid);
 }
 
 void request(pid_t childPid, int resourceNumber) {
@@ -377,7 +384,7 @@ void checkTime(int *outputTimer, int *deadlockDetectionTimer) {
 		}
 	if(abs(simulatedClock[0] - *deadlockDetectionTimer) >= ONE_SECOND) {
 		*deadlockDetectionTimer = simulatedClock[0];
-		runDeadlockDetection();
+		//runDeadlockDetection(); //TODO
 	}
 }
 
@@ -546,9 +553,9 @@ void outputTable() {
 	//printf("Process Table:\nEntry Occupied   PID\tStartS StartN\tServiceS\tServiceN\tWaitS\tWaitN\tBlocked\n");
 	int i;
 	for(i = 0; i < processTableSize; i++) {
-		printf("%-15d %-15d %15d %15d %15d %15d %15d %15d %15d %15d\n\n", i, processTable[i].occupied, processTable[i].pid, processTable[i].startTimeSeconds, processTable[i].startTimeNano, processTable[i].blocked);
+		printf("%-15d %-15d %15d %15d %15d %15d\n\n", i, processTable[i].occupied, processTable[i].pid, processTable[i].startTimeSeconds, processTable[i].startTimeNano, processTable[i].blocked);
 		fprintf(fptr, "%s\n%-15s %-15s %15s %15s %15s %15s %15s %15s %15s %15s\n", "Process Table:", "Entry", "Occupied", "PID", "StartS", "StartN", "ServiceS", "ServiceN", "WaitS", "WaitN", "Blocked");
-		fprintf(fptr, "%-15d %-15d %15d %15d %15d %15d %15d %15d %15d %15d\n\n", i, processTable[i].occupied, processTable[i].pid, processTable[i].startTimeSeconds, processTable[i].startTimeNano, processTable[i].blocked);
+		fprintf(fptr, "%-15d %-15d %15d %15d %15d %15d\n\n", i, processTable[i].occupied, processTable[i].pid, processTable[i].startTimeSeconds, processTable[i].startTimeNano, processTable[i].blocked);
 	}
 }
 
