@@ -309,7 +309,7 @@ void checkForMessages() {
 				terminateProgram(6);
 			}
 	}
-	else {
+	else if(rcvbuf.childPid != 0) {
 		printf("Received %d from worker pid %d\n",rcvbuf.intData, rcvbuf.childPid);
 		takeAction(rcvbuf.childPid, rcvbuf.intData);
 	}
@@ -360,7 +360,7 @@ void grantResource(pid_t childPid, int resourceNumber, int processNumber) {
 		sendMessage(childPid, 1);
 	}
 	else {
-		printf("MASTER: Requested instance of resource %d to child pid %d could not be granted.\n", resourceNumber, childPid);
+		printf("MASTER: Requested instance of resource %d to child pid %d has been denied.\n", resourceNumber, childPid);
 		sendMessage(childPid, 0);
 	}
 }
@@ -371,7 +371,7 @@ void sendMessage(pid_t childPid, int msg) {
 	if(msgsnd(msqid, &buf, sizeof(msgBuffer) - sizeof(long), 0) == -1) {
 			perror("msgsnd to child failed\n");
 			terminateProgram(6);
-		}
+	}
 }
 
 void checkTime(int *outputTimer, int *deadlockDetectionTimer) {
