@@ -547,12 +547,12 @@ void processEnded(int pidNumber) {
 }
 
 void outputTable() {
-	printf("%s\n%-15s %-15s %15s %15s %15s %15s %15s %15s %15s %15s\n", "Process Table:", "Entry", "Occupied", "PID", "StartS", "StartN", "Blocked");
+	printf("%s\n%-15s %-15s %15s %15s %15s %15s\n", "Process Table:", "Entry", "Occupied", "PID", "StartS", "StartN", "Blocked");
 	//printf("Process Table:\nEntry Occupied   PID\tStartS StartN\tServiceS\tServiceN\tWaitS\tWaitN\tBlocked\n");
 	int i;
 	for(i = 0; i < processTableSize; i++) {
 		printf("%-15d %-15d %15d %15d %15d %15d\n\n", i, processTable[i].occupied, processTable[i].pid, processTable[i].startTimeSeconds, processTable[i].startTimeNano, processTable[i].blocked);
-		fprintf(fptr, "%s\n%-15s %-15s %15s %15s %15s %15s %15s %15s %15s %15s\n", "Process Table:", "Entry", "Occupied", "PID", "StartS", "StartN", "Blocked");
+		fprintf(fptr, "%s\n%-15s %-15s %15s %15s %15s %15s\n", "Process Table:", "Entry", "Occupied", "PID", "StartS", "StartN", "Blocked");
 		fprintf(fptr, "%-15d %-15d %15d %15d %15d %15d\n\n", i, processTable[i].occupied, processTable[i].pid, processTable[i].startTimeSeconds, processTable[i].startTimeNano, processTable[i].blocked);
 	}
 }
