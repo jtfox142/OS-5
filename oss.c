@@ -368,6 +368,7 @@ void grantResource(pid_t childPid, int resourceNumber, int processNumber) {
 void sendMessage(pid_t childPid, int msg) {
 	buf.intData = msg;
 	buf.mtype = childPid;
+	printf("MASTER: Sending message of %d to child pid %d\n", msg, childPid);
 	if(msgsnd(msqid, &buf, sizeof(msgBuffer) - sizeof(long), 0) == -1) {
 			perror("msgsnd to child failed\n");
 			terminateProgram(6);
