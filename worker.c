@@ -186,6 +186,8 @@ int main(int argc, char** argv) {
 	timer = simulatedClock[1];
 	int terminate;
 	terminate = 0;
+
+	msgbuffer rcvbuf;
 	while(1) {
 		//If worker has run for at least a second,
 		//it will check every 250 ms to see if it should 
@@ -240,7 +242,6 @@ int main(int argc, char** argv) {
 		}
 
 		//Get message back from parent
-		msgbuffer rcvbuf;
 		printf("WORKER %d: Waiting on reply from master.\n", myPid);
 		if(msgrcv(msqid, &rcvbuf, sizeof(msgbuffer), myPid, 0) == -1) {
 			printf("msgrcv failure in child %d\n", myPid);
