@@ -158,6 +158,7 @@ int main(int argc, char** argv) {
 		if(simulatedClock[0] > 0 && simulatedClock[1] - timer >= MILLISECOND_TIMER) {
 			terminate = checkForTermination(resourceTracker);
 			timer = simulatedClock[1];
+			printf("WORKER: checking for termination\n");//TODO remove
 
 			if(terminate) {
 				printf("WORKER %d: Attempting to terminate.", myPid);
@@ -182,14 +183,17 @@ int main(int argc, char** argv) {
 		//make sure that we haven't already requested too many of that instance.
 		//If we have, then reroll for another resource.
 		if(buf.intData < REQUEST_CODE) {
+			printf("WORKER: might get stuck here\n"); //TODO remove
 			while(!addRequest(resourceTracker, buf.intData)) { //TODO maybe stuck here
 				buf.intData = RNG(9, 0);
 			}
 		}
 
 		//TODO Rework logic so that the returned action is never to release a resource that we don't have
-		if(buf.intData >= REQUEST_CODE && resourceTracker->allocations[buf.intData] < 1)
+		if(buf.intData >= REQUEST_CODE && resourceTracker->allocations[buf.intData] < 1) {
+			printf("WORKER: continuing\n");
 			continue;
+		}
 
 		printf("WORKER %d: Sending message of %d to master.\n", myPid, buf.intData);
 		//Tell parent what we want to do
