@@ -235,13 +235,13 @@ int main(int argc, char** argv) {
 		printf("WORKER %d: Sending message of %d to master.\n", myPid, buf.intData);
 		//Tell parent what we want to do
 		if(msgsnd(msqid, &buf, sizeof(msgbuffer), 0) == -1) {
-				printf("msgsnd to parent failed.\n");
+			printf("msgsnd to parent failed.\n");
 			exit(1);
 		}
 
 		//Get message back from parent
-		printf("WORKER %d: Waiting on reply from master.\n", myPid);
 		msgbuffer rcvbuf;
+		printf("WORKER %d: Waiting on reply from master.\n", myPid);
 		if(msgrcv(msqid, &rcvbuf, sizeof(msgbuffer), myPid, 0) == -1) {
 			printf("msgrcv failure in child %d\n", myPid);
 			exit(1);
