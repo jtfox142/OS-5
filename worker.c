@@ -27,20 +27,13 @@ struct resourceTracker {
 	int allocations[NUMBER_OF_RESOURCES];
 };
 
-int RNG(int max, int min) {
-	unsigned int randval;
-	FILE *f;
-   	f = fopen("/dev/urandom", "r");
-	fread(&randval, sizeof(randval), 1, f);
-	fclose(f);
-
-	srand(randval);
-	return ((rand() % (max - min + 1) + 1));
+int RNG(int max) {
+	return (rand() % max);
 }
 
 int decideAction() {
-	int choice = RNG(100, 0);
-	if(choice <= 65)
+	int choice = RNG(100);
+	if(choice < 65)
 		return REQUEST;
 	return RELEASE;
 }
@@ -48,7 +41,7 @@ int decideAction() {
 //Attempts to grab a random resource. If allocations/requests for that resource are maxed out, then it begins
 //decrementing until it finds a resource that isn't or has checked all the resources.
 int chooseRequestResource(struct resourceTracker *resourceTracker) {
-	int chosenResource = RNG(9, 0);
+	int chosenResource = RNG(9);
 	int remainingRequests = RESOURCE_INSTANCES - resourceTracker->allocations[chosenResource];
 	for(int count = 0; count < NUMBER_OF_RESOURCES; count++) {
 		if(resourceTracker->allocations[chosenResource] < 20 && resourceTracker->requests[chosenResource] < remainingRequests)
@@ -65,7 +58,7 @@ int chooseRequestResource(struct resourceTracker *resourceTracker) {
 //begins decrementing until it finds an instance of a resource or it has checked all the resources.
 //If there are no resources to release, then it requests one instead (back in main).
 int chooseReleaseResource(struct resourceTracker *resourceTracker) {
-	int chosenResource = RNG(9, 0);
+	int chosenResource = RNG(9);
 	for(int count = 0; count < NUMBER_OF_RESOURCES; count++) {
 		if(resourceTracker->allocations[chosenResource] > 0)
 			return chosenResource;
@@ -149,6 +142,14 @@ int main(int argc, char** argv) {
 	struct resourceTracker *resourceTracker;
 	resourceTracker = malloc(sizeof(struct resourceTracker));
 	initializeResourceTracker(resourceTracker);
+
+	unsigned int randval;
+	FILE *f;
+   	f = fopen("/dev/urandom", "r");
+	fread(&randval, sizeof(randval), 1, f);
+	fclose(f);
+
+	srand(randval);
 
 	/*
 	
