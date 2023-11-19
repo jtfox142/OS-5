@@ -74,7 +74,7 @@ void initializeProcessTable();
 void startInitialProcesses(int initialChildren);
 void initializePCB(pid_t pid);
 void processEnded(int pidNumber);
-void outputTable();
+void outputProcessTable();
 
 //OSS functions
 void incrementClock(int timePassed);
@@ -97,6 +97,7 @@ void grantResource(pid_t childPid, int resourceNumber, int processNumber);
 void initializeResourceTable();
 void request(pid_t childPid, int resourceNumber);
 int release(pid_t childPid, int resourceNumber);
+void outputResourceTable();
 
 //Queue functions
 int addItemToQueue(pid_t *queue, pid_t itemToAdd);
@@ -362,6 +363,8 @@ void grantResource(pid_t childPid, int resourceNumber, int processNumber) {
 	else {
 		printf("MASTER: Requested instance of resource %d to child pid %d has been denied.\n", resourceNumber, childPid);
 		sendMessage(childPid, 0);
+		int entry = findTableIndex(childPid);
+		processTable[entry].blocked = 1;
 	}
 }
 
@@ -379,7 +382,8 @@ void checkTime(int *outputTimer, int *deadlockDetectionTimer) {
 	if(abs(simulatedClock[1] - *outputTimer) >= HALF_SECOND){
 			*outputTimer = simulatedClock[1];
 			printf("\nOSS PID:%d SysClockS:%d SysClockNano:%d\n", getpid(), simulatedClock[0], simulatedClock[1]); 
-			outputTable(fptr);
+			outputProcessTable();
+			outputResourceTable();
 		}
 	if(abs(simulatedClock[0] - *deadlockDetectionTimer) >= ONE_SECOND) {
 		*deadlockDetectionTimer = simulatedClock[0];
@@ -547,14 +551,20 @@ void processEnded(int pidNumber) {
 	}
 }
 
-void outputTable() {
+void outputProcessTable() {
 	printf("%s\n%-15s %-15s %15s %15s %15s %15s\n", "Process Table:", "Entry", "Occupied", "PID", "StartS", "StartN", "Blocked");
-	//printf("Process Table:\nEntry Occupied   PID\tStartS StartN\tServiceS\tServiceN\tWaitS\tWaitN\tBlocked\n");
+	fprintf(fptr, "%s\n%-15s %-15s %15s %15s %15s %15s\n", "Process Table:", "Entry", "Occupied", "PID", "StartS", "StartN", "Blocked");
 	int i;
 	for(i = 0; i < processTableSize; i++) {
 		printf("%-15d %-15d %15d %15d %15d %15d\n\n", i, processTable[i].occupied, processTable[i].pid, processTable[i].startTimeSeconds, processTable[i].startTimeNano, processTable[i].blocked);
-		fprintf(fptr, "%s\n%-15s %-15s %15s %15s %15s %15s\n", "Process Table:", "Entry", "Occupied", "PID", "StartS", "StartN", "Blocked");
 		fprintf(fptr, "%-15d %-15d %15d %15d %15d %15d\n\n", i, processTable[i].occupied, processTable[i].pid, processTable[i].startTimeSeconds, processTable[i].startTimeNano, processTable[i].blocked);
+	}
+}
+
+void outputResourceTable() {
+	printf("%s\n%-15s %-15s %15s\n", "Resource Table:", "Entry", "Available", "Total");
+	for(int count = 0; count < RESOURCE_TABLE_SIZE; count++) {
+		printf("%-15s %-15s %-15s\n", count, resourceTable[count].availableInstances, resourceTable[count].totalInstances);
 	}
 }
 
