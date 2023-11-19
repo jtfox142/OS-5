@@ -191,6 +191,7 @@ int main(int argc, char** argv) {
 		if(buf.intData >= REQUEST_CODE && resourceTracker->allocations[buf.intData] < 1)
 			continue;
 
+		printf("WORKER %d: Sending message of %d to master.", myPid, buf.intData);
 		//Tell parent what we want to do
 		if(msgsnd(msqid, &buf, sizeof(msgbuffer) - sizeof(long), 0) == -1) {
 				printf("msgsnd to parent failed.\n");
