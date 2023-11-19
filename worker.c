@@ -204,6 +204,7 @@ int main(int argc, char** argv) {
 			printf("msgrcv failure in child %d\n", myPid);
 			exit(1);
 		}	
+		printf("WORKER %d: Received reply of %d from master.\n", myPid, rcvbuf.intData);
 
 		//If our request was granted, turn the request into an allocation
 		if(1 == rcvbuf.intData) {

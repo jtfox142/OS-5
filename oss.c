@@ -356,6 +356,8 @@ void grantResource(pid_t childPid, int resourceNumber, int processNumber) {
 	if(resourceTable[resourceNumber].availableInstances > 0) {
 		processTable[processNumber].allocationVector[resourceNumber] += 1;
 		processTable[processNumber].requestVector[resourceNumber] -= 1;
+
+		resourceTable[resourceNumber].availableInstances -= 1;
 		
 		printf("MASTER: Requested instance of resource %d to child pid %d has been granted.\n", resourceNumber, childPid);
 		sendMessage(childPid, 1);
