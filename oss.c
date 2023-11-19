@@ -111,6 +111,7 @@ int findTableIndex(pid_t pid);
 void checkTime(int *outputTimer, int *deadlockDetectionTimer);
 void takeAction(pid_t childPid, int msgData);
 void childTerminated(pid_t terminatedChild);
+void sendMessage(pid_t childPid, int msg);
 
 /* 
 
