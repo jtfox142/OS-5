@@ -565,7 +565,7 @@ void outputProcessTable() {
 void outputResourceTable() {
 	printf("%s\n%-15s %-15s %15s\n", "Resource Table:", "Entry", "Available", "Total");
 	for(int count = 0; count < RESOURCE_TABLE_SIZE; count++) {
-		printf("%-15d %-15d %-15d\n", count, resourceTable[count].availableInstances, resourceTable[count].totalInstances);
+		printf("%-15d %-15d %-30d\n", count, resourceTable[count].availableInstances, resourceTable[count].totalInstances);
 	}
 }
 
