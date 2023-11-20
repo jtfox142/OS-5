@@ -300,7 +300,7 @@ void childTerminated(pid_t terminatedChild) {
 
 void checkForMessages() {
 	msgBuffer rcvbuf;
-	if(msgrcv(msqid, &rcvbuf, sizeof(msgBuffer), 0, IPC_NOWAIT) == -1) {
+	if(msgrcv(msqid, &rcvbuf, sizeof(msgBuffer), getpid(), IPC_NOWAIT) == -1) {
    		if(errno == ENOMSG) {
       		printf("Got no message so maybe do nothing?\n");
    		}
