@@ -50,7 +50,7 @@ int chooseRequestResource(struct resourceTracker *resourceTracker) {
 		if(chosenResource > 0)
 			chosenResource--;
 		else
-			chosenResource = 10;
+			chosenResource = 9;
 	}
 	return -1;
 }
@@ -66,7 +66,7 @@ int chooseReleaseResource(struct resourceTracker *resourceTracker) {
 		if(chosenResource > 0)
 			chosenResource--;
 		else
-			chosenResource = 10;
+			chosenResource = 9;
 	}
 
 	return -1;
@@ -222,7 +222,7 @@ int main(int argc, char** argv) {
 		if(REQUEST == action) {
 			buf.intData = chooseRequestResource(resourceTracker);
 			if(buf.intData == -1) {
-				perror("WORKER %d has requested the maximum number of resources. Terminating\n", myPid);
+				printf("WORKER %d has requested the maximum number of resources. Terminating\n", myPid);
 				exit(0);
 			}
 		}
