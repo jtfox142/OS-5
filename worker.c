@@ -92,7 +92,7 @@ int addRequest(struct resourceTracker *resourceTracker, int resourceNumber) {
 }
 
 void addAllocation(struct resourceTracker *resourceTracker, int allocationNumber) {
-	int resourceNumber = allocationNumber - REQUEST_CODE;
+	int resourceNumber = allocationNumber;
 	resourceTracker->allocations[resourceNumber] = resourceTracker->allocations[resourceNumber] + 1;
 }
 
@@ -228,14 +228,16 @@ int main(int argc, char** argv) {
 		
 		if(RELEASE == action) {
 			printf("\nI SHOULD BE RELEASING HERE\n\n"); //TODO remove
-			//chooseReleaseResource returns the resource number. Add 10 to communicate that it is being released
+			//chooseReleaseResource returns the resource number
 			buf.intData = chooseReleaseResource(resourceTracker);
-			buf.intData += 10;
+
 			//If there are no resources to release, request one instead
 			if(buf.intData == -1) {
 				printf("WORKER %d: No resources to release. Requesting one instead.", myPid); //TODO remove
 				buf.intData = chooseRequestResource(resourceTracker);
 			}
+			else //add 10 to communicate that it is being released, not requested
+				buf.intData += 10;
 		}
 
 		printf("WORKER %d: Sending message of %d to master.\n", myPid, buf.intData);
