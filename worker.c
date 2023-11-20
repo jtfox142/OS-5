@@ -200,8 +200,9 @@ int main(int argc, char** argv) {
 			timer = simulatedClock[1];
 
 			if(terminate) {
-				printf("WORKER %d: Attempting to terminate.", myPid);
 				buf.intData = TERMINATION_CODE;
+				printf("WORKER %d: Sending message of %d to master.\n", myPid, buf.intData);
+				printf("WORKER %d: Attempting to terminate.\n", myPid);
 				if(msgsnd(msqid, &buf, sizeof(msgbuffer) - sizeof(long), 0) == -1) {
 					printf("msgsnd to parent failed.\n");
 					exit(1);
