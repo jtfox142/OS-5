@@ -42,8 +42,9 @@ int decideAction() {
 //decrementing until it finds a resource that isn't or has checked all the resources.
 int chooseRequestResource(struct resourceTracker *resourceTracker) {
 	int chosenResource = RNG(9);
-	int remainingRequests = RESOURCE_INSTANCES - resourceTracker->allocations[chosenResource];
+	int remainingRequests;
 	for(int count = 0; count < NUMBER_OF_RESOURCES; count++) {
+		remainingRequests = RESOURCE_INSTANCES - resourceTracker->allocations[chosenResource];
 		if(resourceTracker->allocations[chosenResource] < 20 && resourceTracker->requests[chosenResource] < remainingRequests)
 			return chosenResource;
 		if(chosenResource > 0)
@@ -221,7 +222,7 @@ int main(int argc, char** argv) {
 		if(REQUEST == action) {
 			buf.intData = chooseRequestResource(resourceTracker);
 			if(buf.intData == -1) {
-				perror("WORKER %d has requested the maximum number of resources. Terminating\n");
+				perror("WORKER %d has requested the maximum number of resources. Terminating\n", myPid);
 				exit(0);
 			}
 		}
