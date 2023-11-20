@@ -221,7 +221,7 @@ int main(int argc, char** argv) {
 		if(REQUEST == action) {
 			buf.intData = chooseRequestResource(resourceTracker);
 			if(buf.intData == -1) {
-				perror("WORKER detected deadlock before parent. Terminating\n");
+				perror("WORKER detected deadlock before parent did. Terminating\n");
 				exit(0);
 			}
 		}
@@ -230,8 +230,10 @@ int main(int argc, char** argv) {
 			//chooseReleaseResource returns the resource number. Add 10 to communicate that it is being released
 			buf.intData = chooseReleaseResource(resourceTracker) + REQUEST_CODE;
 			//If there are no resources to release, request one instead
-			if(buf.intData == -1)
+			if(buf.intData == -1) {
+				printf("WORKER %d: No resources to release. Requesting one instead.", myPid); //TODO remove
 				buf.intData = chooseRequestResource(resourceTracker);
+			}
 		}
 
 		printf("WORKER %d: Sending message of %d to master.\n", myPid, buf.intData);

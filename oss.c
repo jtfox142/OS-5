@@ -302,7 +302,7 @@ void checkForMessages() {
 	msgBuffer rcvbuf;
 	if(msgrcv(msqid, &rcvbuf, sizeof(msgBuffer), getpid(), IPC_NOWAIT) == -1) {
    		if(errno == ENOMSG) {
-      		printf("Got no message so maybe do nothing?\n");
+      		//printf("Got no message so maybe do nothing?\n");
    		}
 		else {
 				printf("Got an error from msgrcv\n");
