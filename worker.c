@@ -227,6 +227,7 @@ int main(int argc, char** argv) {
 		}
 		
 		if(RELEASE == action) {
+			printf("\nI SHOULD BE RELEASING HERE\n\n"); //TODO remove
 			//chooseReleaseResource returns the resource number. Add 10 to communicate that it is being released
 			buf.intData = chooseReleaseResource(resourceTracker) + REQUEST_CODE;
 			//If there are no resources to release, request one instead
