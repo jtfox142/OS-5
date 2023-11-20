@@ -14,7 +14,7 @@
 #define MAX_CHILDREN 18
 #define ONE_SECOND 1000000000
 #define HALF_SECOND 500000000
-#define STANDARD_CLOCK_INCREMENT 10000
+#define STANDARD_CLOCK_INCREMENT 1000000
 #define RESOURCE_TABLE_SIZE 10
 
 typedef struct msgBuffer {
@@ -98,6 +98,7 @@ void initializeResourceTable();
 void request(pid_t childPid, int resourceNumber);
 int release(pid_t childPid, int resourceNumber);
 void outputResourceTable();
+int runDeadlockDetection();
 
 //Queue functions
 int addItemToQueue(pid_t *queue, pid_t itemToAdd);
@@ -113,6 +114,7 @@ void checkTime(int *outputTimer, int *deadlockDetectionTimer);
 void takeAction(pid_t childPid, int msgData);
 void childTerminated(pid_t terminatedChild);
 void sendMessage(pid_t childPid, int msg);
+void terminateProcess();
 
 /* 
 
@@ -238,7 +240,7 @@ int main(int argc, char** argv) {
 
 		//outputs the process table to a log file and the screen every half second
 		//and runs a deadlock detection algorithm every second
-		//checkTime(outputTimer, deadlockDetectionTimer);
+		checkTime(outputTimer, deadlockDetectionTimer);
 
 		incrementClock(STANDARD_CLOCK_INCREMENT);
 	}
@@ -388,8 +390,95 @@ void checkTime(int *outputTimer, int *deadlockDetectionTimer) {
 		}
 	if(simulatedClock[0] - *deadlockDetectionTimer >= ONE_SECOND) {
 		*deadlockDetectionTimer = simulatedClock[0];
-		//runDeadlockDetection(); //TODO
+
+		//Terminate processes until deadlock is gone, in order of highest resource allocation. 
+		//Terminates processes using the most resources first
+		while(runDeadlockDetection()) {
+			terminateProcess();
+		}
 	}
+}
+
+//Kills the most resource-intensive worker process
+void terminateProcess() {
+	int heaviestProcess; //records the pid of the process using the most resources
+	int currentResourcesUsed = 0;
+	int mostResourcesUsed = 0;
+	
+	for(int processCounter = 0; processCounter < processTableSize; processCounter++) {
+		for(int resourceCounter = 0; resourceCounter < RESOURCE_TABLE_SIZE; resourceCounter++) {
+			currentResourcesUsed += processTable[processCounter].allocationVector[resourceCounter];
+		}
+		if(currentResourcesUsed > mostResourcesUsed) {
+			mostResourcesUsed = currentResourcesUsed;
+			heaviestProcess = processCounter;
+		}
+		currentResourcesUsed = 0;
+	}
+	pid_t workerToTerminate = findTableIndex(heaviestProcess);
+	kill(workerToTerminate, 3);
+}
+
+//Returns the entry number of the most resource-intensive process if deadlock is detected, returns 0 otherwise
+int runDeadlockDetection() {
+	int requestMatrix[processTableSize][RESOURCE_TABLE_SIZE];
+	int allocationMatrix[processTableSize][RESOURCE_TABLE_SIZE];
+	int availableVector[RESOURCE_TABLE_SIZE];
+
+	//Construct request and allocation matrices, as well as the available vector
+	for(int processCounter = 0; processCounter < processTableSize; processCounter++) {
+		for(int resourceCounter = 0; resourceCounter < RESOURCE_TABLE_SIZE; resourceCounter++) {
+			requestMatrix[processCounter][resourceCounter] = processTable[processCounter].requestVector[resourceCounter];
+			allocationMatrix[processCounter][resourceCounter] = processTable[processCounter].allocationVector[resourceCounter];
+			availableVector[resourceCounter] = RESOURCE_TABLE_SIZE - processTable[processCounter].allocationVector[resourceCounter];
+		}
+	}
+
+	int satisfyRequest;
+	int finished[processTableSize];
+
+	for(int count = 0; count < processTableSize; count++)
+		finished[count] = 0;
+
+	//Loop through request matrix, attempting to satisfy requests
+	//If available - requested >= 0, then there are sufficient resources for that specific request
+	//If satisfyRequest is true, then that process can finish out and then release its resources
+	for(int processCounter = 0; processCounter < processTableSize; processCounter++) {
+		//If a process has already completed, move on to the next
+		if(finished[processCounter])
+			continue;
+
+		for(int resourceCounter = 0; resourceCounter < RESOURCE_TABLE_SIZE; resourceCounter++) {
+			if(availableVector[resourceCounter] - requestMatrix[processCounter][resourceCounter] >= 0)
+				satisfyRequest = 1;
+			else {
+				satisfyRequest = 0;
+				break;
+			}
+		}
+		//If possible, then "let the process play out" and release its resources
+		if(satisfyRequest) {
+			for(int resourceCounter = 0; resourceCounter < RESOURCE_TABLE_SIZE; resourceCounter++) {
+				availableVector[resourceCounter] += allocationMatrix[processCounter][resourceCounter];
+			}
+			finished[processCounter] = 1;
+			processCounter = -1; //Reset the for loop to zero to see if processes at the beginning can now complete
+		}
+	}
+
+	//There's probably a better way to do this, but this iterates over all indexes of the finished array.
+	//If any process remains unfinished at this point, then deadlock has been detected. Otherwise, we
+	//are all good
+	int deadlockDetected;
+	deadlockDetected = 0;
+	for(int count = 0; count < processTableSize; count++) {
+		if(finished[count] != 1) {
+			deadlockDetected = 1;
+			break;
+		}
+	}
+
+	return deadlockDetected;
 }
 
 void help() {
