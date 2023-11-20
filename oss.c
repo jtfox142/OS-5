@@ -416,11 +416,13 @@ void terminateProcess() {
 		currentResourcesUsed = 0;
 	}
 	pid_t workerToTerminate = findTableIndex(heaviestProcess);
+	printf("MASTER: Killing child pid %d to try and correct deadlock.\n", workerToTerminate);
 	kill(workerToTerminate, 3);
 }
 
 //Returns the entry number of the most resource-intensive process if deadlock is detected, returns 0 otherwise
 int runDeadlockDetection() {
+	printf("MASTER: Running deadlock detection algorithm at time %d.%d", simulatedClock[0], simulatedClock[1]);
 	int requestMatrix[processTableSize][RESOURCE_TABLE_SIZE];
 	int allocationMatrix[processTableSize][RESOURCE_TABLE_SIZE];
 	int availableVector[RESOURCE_TABLE_SIZE];
@@ -474,6 +476,7 @@ int runDeadlockDetection() {
 	for(int count = 0; count < processTableSize; count++) {
 		if(finished[count] != 1) {
 			deadlockDetected = 1;
+			printf("MASTER: Deadlock detected. Taking measures to correct.\n");
 			break;
 		}
 	}
