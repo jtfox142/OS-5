@@ -33,7 +33,7 @@ int RNG(int max) {
 
 int decideAction() {
 	int choice = RNG(100);
-	if(choice < 65)
+	if(choice < 90)
 		return REQUEST;
 	return RELEASE;
 }
