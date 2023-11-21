@@ -477,6 +477,14 @@ void deadlockTermination() {
 	}
 	pid_t workerToTerminate = processTable[heaviestProcess].pid;
 	printf("MASTER: Killing child pid %d to try and correct deadlock.\n", workerToTerminate);
+	int sleepQueueSize = sleepQueue->size;
+	for(int count = 0; count < sleepQueueSize; count++) {
+		int currentPid = dequeue(sleepQueue);
+		if(currentPid == workerToTerminate) {
+			break;
+		}
+		enqueue(sleepQueue, currentPid);
+	}
 	kill(workerToTerminate, 3);
 	childTerminated(workerToTerminate);
 }
