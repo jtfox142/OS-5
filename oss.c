@@ -288,7 +288,6 @@ void checkOutstandingRequests() {
 			}
 		}
 		enqueue(sleepQueue, currentPid);
-		fprintf(fptr, "MASTER: Process %d could not be awoken.\n", currentPid);
 	}
 
 }
