@@ -387,16 +387,18 @@ void checkTime(int *outputTimer, int *deadlockDetectionTimer) {
 			printf("\nOSS PID:%d SysClockS:%d SysClockNano:%d\n", getpid(), simulatedClock[0], simulatedClock[1]); 
 			outputProcessTable();
 			outputResourceTable();
-		}
+	}
 	if(simulatedClock[0] - *deadlockDetectionTimer >= ONE_SECOND) {
 		*deadlockDetectionTimer = simulatedClock[0];
 
 		//Terminate processes until deadlock is gone, in order of highest resource allocation. 
 		//Terminates processes using the most resources first
+		printf("MASTER: Entering deadlock detection loop\n");//TODO delete
 		while(runDeadlockDetection()) {
 			terminateProcess();
 		}
 	}
+	printf("MASTER: Exiting checkTime()\n");
 }
 
 //Kills the most resource-intensive worker process
