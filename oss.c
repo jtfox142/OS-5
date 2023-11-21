@@ -522,6 +522,7 @@ int runDeadlockDetection() {
 	//If available - requested >= 0, then there are sufficient resources for that specific request
 	//If satisfyRequest is true, then that process can finish out and then release its resources
 	for(int processCounter = 0; processCounter < processTableSize; processCounter++) {
+		printf("Process: %d\n", processCounter);
 		//If a process has already completed, move on to the next
 		if(finished[processCounter])
 			continue;
