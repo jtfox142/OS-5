@@ -289,6 +289,7 @@ void checkOutstandingRequests() {
 			
 			if(resourceTable[resourceCounter].availableInstances > 0) {
 				printf("MASTER: Waking process %d\n", currentPid);
+				processTable[entry].blocked = 0;
 				grantResource(currentPid, resourceCounter, processCounter);
 				return;
 			}
