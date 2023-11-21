@@ -394,7 +394,6 @@ void checkTime(int *outputTimer, int *deadlockDetectionTimer) {
 
 		//Terminate processes until deadlock is gone, in order of highest resource allocation. 
 		//Terminates processes using the most resources first
-		printf("MASTER: Entering deadlock detection loop\n");//TODO delete
 		while(runDeadlockDetection()) {
 			terminateProcess();
 		}
@@ -435,7 +434,7 @@ int runDeadlockDetection() {
 		for(int resourceCounter = 0; resourceCounter < RESOURCE_TABLE_SIZE; resourceCounter++) {
 			requestMatrix[processCounter][resourceCounter] = processTable[processCounter].requestVector[resourceCounter];
 			allocationMatrix[processCounter][resourceCounter] = processTable[processCounter].allocationVector[resourceCounter];
-			availableVector[resourceCounter] = RESOURCE_TABLE_SIZE - processTable[processCounter].allocationVector[resourceCounter];
+			availableVector[resourceCounter] = resourceTable[resourceCounter].availableInstances;
 		}
 	}
 
@@ -483,6 +482,9 @@ int runDeadlockDetection() {
 			break;
 		}
 	}
+
+	if(!deadlockDetected) 
+		printf("MASTER: No deadlock detected. Continuing.\n");
 
 	return deadlockDetected;
 }
