@@ -105,7 +105,7 @@ void receivingOutput(int chldNum, int chldPid, int systemClock[2], msgBuffer rcv
 void grantResource(pid_t childPid, int resourceNumber, int processNumber);
 void initializeResourceTable();
 void request(pid_t childPid, int resourceNumber);
-int release(pid_t childPid, int resourceNumber);
+int release(pid_t childPid, int resourceNumber, int output);
 void outputResourceTable();
 int runDeadlockDetection();
 
@@ -343,7 +343,7 @@ void nonblockWait() {
 void childTerminated(pid_t terminatedChild) {
 	int entry = findTableIndex(terminatedChild);
 	for(int count = 0; count < RESOURCE_TABLE_SIZE; count++) {
-		while(release(terminatedChild, count));
+		while(release(terminatedChild, count, 0));
 		processTable[entry].requestVector[count] = 0;
 	}
 	processTable[entry].occupied = 0;
@@ -378,7 +378,7 @@ void takeAction(pid_t childPid, int msgData) {
 		return;
 	}
 	if(msgData < 20) {
-		release(childPid, (msgData - RESOURCE_TABLE_SIZE)); //msgData will come back as the resource number + 10
+		release(childPid, (msgData - RESOURCE_TABLE_SIZE), 1); //msgData will come back as the resource number + 10
 		return;
 	}
 	childTerminated(childPid);
@@ -391,16 +391,18 @@ void request(pid_t childPid, int resourceNumber) {
 	grantResource(childPid, resourceNumber, entry);
 }
 
-int release(pid_t childPid, int resourceNumber) {
+int release(pid_t childPid, int resourceNumber, int output) {
 	int entry = findTableIndex(childPid);
 	if(processTable[entry].allocationVector[resourceNumber] > 0) {
 		processTable[entry].allocationVector[resourceNumber] -= 1;
-		printf("MASTER: Child pid %d has released an instance of resource %d\n", childPid, resourceNumber);
+		if(output)
+			printf("MASTER: Child pid %d has released an instance of resource %d\n", childPid, resourceNumber);
 		resourceTable[resourceNumber].availableInstances += 1;
 		sendMessage(childPid, 2);
 		return 1;
 	}
-	printf("MASTER: Child pid %d has attempted to release an instance of resource %d that it does not have\n", childPid, resourceNumber);
+	if(output)
+		printf("MASTER: Child pid %d has attempted to release an instance of resource %d that it does not have\n", childPid, resourceNumber);
 	return 0;
 }
 
