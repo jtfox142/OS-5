@@ -419,10 +419,11 @@ void terminateProcess() {
 	pid_t workerToTerminate = processTable[heaviestProcess].pid;
 	printf("MASTER: Killing child pid %d to try and correct deadlock.\n", workerToTerminate);
 	kill(workerToTerminate, 3);
-	processEnded(workerToTerminate);
+	childTerminated(workerToTerminate);
 }
 
 //Returns the entry number of the most resource-intensive process if deadlock is detected, returns 0 otherwise
+//TODO runs the algo on ALL process, living or dead, so it will continually detect deadlock. don't do that.
 int runDeadlockDetection() {
 	printf("MASTER: Running deadlock detection algorithm at time %d.%d\n", simulatedClock[0], simulatedClock[1]);
 	int requestMatrix[processTableSize][RESOURCE_TABLE_SIZE];
