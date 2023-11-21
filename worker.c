@@ -200,8 +200,8 @@ int main(int argc, char** argv) {
 
 			if(terminate) {
 				buf.intData = TERMINATION_CODE;
-				printf("WORKER %d: Sending message of %d to master.\n", myPid, buf.intData);
-				printf("WORKER %d: Attempting to terminate.\n", myPid);
+				//printf("WORKER %d: Sending message of %d to master.\n", myPid, buf.intData);
+				//printf("WORKER %d: Attempting to terminate.\n", myPid);
 				if(msgsnd(msqid, &buf, sizeof(msgbuffer) - sizeof(long), 0) == -1) {
 					printf("msgsnd to parent failed.\n");
 					exit(1);
@@ -221,7 +221,7 @@ int main(int argc, char** argv) {
 		if(REQUEST == action) {
 			buf.intData = chooseRequestResource(resourceTracker);
 			if(buf.intData == -1) {
-				printf("WORKER %d has requested the maximum number of resources. Terminating\n", myPid);
+				//printf("WORKER %d has requested the maximum number of resources. Terminating\n", myPid);
 				exit(0);
 			}
 		}
@@ -238,7 +238,7 @@ int main(int argc, char** argv) {
 				buf.intData += 10;
 		}
 
-		printf("WORKER %d: Sending message of %d to master.\n", myPid, buf.intData);
+		//printf("WORKER %d: Sending message of %d to master.\n", myPid, buf.intData);
 		//Tell parent what we want to do
 		if(msgsnd(msqid, &buf, sizeof(msgbuffer), 0) == -1) {
 			printf("msgsnd to parent failed.\n");
@@ -246,12 +246,12 @@ int main(int argc, char** argv) {
 		}
 
 		//Get message back from parent
-		printf("WORKER %d: Waiting on reply from master.\n", myPid);
+		//printf("WORKER %d: Waiting on reply from master.\n", myPid);
 		if(msgrcv(msqid, &rcvbuf, sizeof(msgbuffer), myPid, 0) == -1) {
 			printf("msgrcv failure in child %d\n", myPid);
 			exit(1);
 		}	
-		printf("WORKER %d: Received reply of %d from master.\n", myPid, rcvbuf.intData);
+		//printf("WORKER %d: Received reply of %d from master.\n", myPid, rcvbuf.intData);
 
 		//If our request was granted, turn the request into an allocation
 		if(1 == rcvbuf.intData) {
@@ -262,21 +262,21 @@ int main(int argc, char** argv) {
 			removeAllocation(resourceTracker, buf.intData);
 		} //If our request was denied go to "sleep" waiting on a message from parent
 		else {
-			printf("WORKER %d: Going to sleep.\n", myPid);
+			//printf("WORKER %d: Going to sleep.\n", myPid);
 			do {
 				if(msgrcv(msqid, &rcvbuf, sizeof(msgbuffer), myPid, 0) == -1) {
 					printf("msgrcv failure in child %d\n", myPid);
 					exit(1);
 				}
 			}while(rcvbuf.intData != 1);
-			printf("WORKER %d: Waking up.\n", myPid);
+			//printf("WORKER %d: Waking up.\n", myPid);
 			removeRequest(resourceTracker, buf.intData);
 			addAllocation(resourceTracker, buf.intData);
 		}
 	}
 
 
-	printf("WORKER %d: Error: exited loop. Now terminating.\n", myPid);
+	//printf("WORKER %d: Error: exited loop. Now terminating.\n", myPid);
 	//detach from shared memory
 	shmdt(simulatedClock);
 	return EXIT_SUCCESS;

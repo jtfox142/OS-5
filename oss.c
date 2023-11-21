@@ -133,10 +133,6 @@ void deadlockTermination();
 
 TODO
 * It is working! Deadlock is being created! And it is being fixed! Good job!
-* finish grantOutstandingRequests. This should allow processes to start again after deadlock is fixed :)
-* Upon completion of the above, the program should terminate when: 1. all the workers terminate themselves or 
-	2. all workers have been killed by the deadlock detection algo
-* Limit output to 10k lines, change printfs to fprintfs
 
 */
 
@@ -292,14 +288,14 @@ void checkOutstandingRequests() {
 				continue;
 			
 			if(resourceTable[resourceCounter].availableInstances > 0) {
-				printf("MASTER: Waking process %d\n", currentPid);
+				fprintf(fptr, "MASTER: Waking process %d\n", currentPid);
 				processTable[entry].blocked = 0;
 				grantResource(currentPid, resourceCounter, entry);
 				return;
 			}
 		}
 		enqueue(sleepQueue, currentPid);
-		printf("MASTER: Process %d could not be awoken.\n", currentPid);
+		fprintf(fptr, "MASTER: Process %d could not be awoken.\n", currentPid);
 	}
 
 }
@@ -339,7 +335,6 @@ void nonblockWait() {
 	childTerminated(terminatedChild);
 }
 
-//TODO If a child is terminated and then its request is granted, then it can have a request of -1
 void childTerminated(pid_t terminatedChild) {
 	int entry = findTableIndex(terminatedChild);
 	for(int count = 0; count < RESOURCE_TABLE_SIZE; count++) {
@@ -348,11 +343,9 @@ void childTerminated(pid_t terminatedChild) {
 	}
 	processTable[entry].occupied = 0;
 	processTable[entry].blocked = 0;
-	//TODO reset checkChildren to test for occupied status and do away with runningChildren
 	runningChildren--;
 
-	printf("MASTER: Child pid %d has terminated and its resources have been released.\n", terminatedChild);
-	//TODO: output to logfile that child terminated
+	fprintf(fptr, "MASTER: Child pid %d has terminated and its resources have been released.\n", terminatedChild);
 }
 
 void checkForMessages() {
@@ -387,7 +380,7 @@ void takeAction(pid_t childPid, int msgData) {
 void request(pid_t childPid, int resourceNumber) {
 	int entry = findTableIndex(childPid);
 	processTable[entry].requestVector[resourceNumber] += 1; //TODO change this to enqueue
-	printf("MASTER: Child pid %d has requested an instance of resource %d\n", childPid, resourceNumber);
+	fprintf(fptr, "MASTER: Child pid %d has requested an instance of resource %d\n", childPid, resourceNumber);
 	grantResource(childPid, resourceNumber, entry);
 }
 
@@ -396,13 +389,13 @@ int release(pid_t childPid, int resourceNumber, int output) {
 	if(processTable[entry].allocationVector[resourceNumber] > 0) {
 		processTable[entry].allocationVector[resourceNumber] -= 1;
 		if(output)
-			printf("MASTER: Child pid %d has released an instance of resource %d\n", childPid, resourceNumber);
+			fprintf(fptr, "MASTER: Child pid %d has released an instance of resource %d\n", childPid, resourceNumber);
 		resourceTable[resourceNumber].availableInstances += 1;
 		sendMessage(childPid, 2, output);
 		return 1;
 	}
 	if(output)
-		printf("MASTER: Child pid %d has attempted to release an instance of resource %d that it does not have\n", childPid, resourceNumber);
+		fprintf(fptr, "MASTER: Child pid %d has attempted to release an instance of resource %d that it does not have\n", childPid, resourceNumber);
 	return 0;
 }
 
@@ -422,11 +415,11 @@ void grantResource(pid_t childPid, int resourceNumber, int processNumber) {
 
 		resourceTable[resourceNumber].availableInstances -= 1;
 		
-		printf("MASTER: Requested instance of resource %d to child pid %d has been granted.\n", resourceNumber, childPid);
+		fprintf(fptr, "MASTER: Requested instance of resource %d to child pid %d has been granted.\n", resourceNumber, childPid);
 		sendMessage(childPid, 1, 1);
 	}
 	else {
-		printf("MASTER: Requested instance of resource %d to child pid %d has been denied.\n", resourceNumber, childPid);
+		fprintf(fptr, "MASTER: Requested instance of resource %d to child pid %d has been denied.\n", resourceNumber, childPid);
 		sendMessage(childPid, 0, 1);
 		int entry = findTableIndex(childPid);
 		processTable[entry].blocked = resourceNumber + 1;
@@ -438,7 +431,7 @@ void sendMessage(pid_t childPid, int msg, int output) {
 	buf.intData = msg;
 	buf.mtype = childPid;
 	if(output)
-		printf("MASTER: Sending message of %d to child pid %d\n", msg, childPid);
+		fprintf(fptr, "MASTER: Sending message of %d to child pid %d\n", msg, childPid);
 	if(msgsnd(msqid, &buf, sizeof(msgBuffer), 0) == -1) {
 			perror("msgsnd to child failed\n");
 			terminateProgram(6);
@@ -481,7 +474,7 @@ void deadlockTermination() {
 		currentResourcesUsed = 0;
 	}
 	pid_t workerToTerminate = processTable[heaviestProcess].pid;
-	printf("MASTER: Killing child pid %d to try and correct deadlock.\n", workerToTerminate);
+	fprintf(fptr, "MASTER: Killing child pid %d to try and correct deadlock.\n", workerToTerminate);
 	int sleepQueueSize = sleepQueue->size;
 	for(int count = 0; count < sleepQueueSize; count++) {
 		int currentPid = dequeue(sleepQueue);
@@ -496,7 +489,7 @@ void deadlockTermination() {
 
 //Returns the entry number of the most resource-intensive process if deadlock is detected, returns 0 otherwise
 int runDeadlockDetection() {
-	printf("MASTER: Running deadlock detection algorithm at time %d.%d\n", simulatedClock[0], simulatedClock[1]);
+	fprintf(fptr, "MASTER: Running deadlock detection algorithm at time %d.%d\n", simulatedClock[0], simulatedClock[1]);
 	int requestMatrix[processTableSize][RESOURCE_TABLE_SIZE];
 	int allocationMatrix[processTableSize][RESOURCE_TABLE_SIZE];
 	int availableVector[RESOURCE_TABLE_SIZE];
@@ -526,21 +519,20 @@ int runDeadlockDetection() {
 		if(finished[processCounter])
 			continue;
 
-		printf("Process number: %d\n", processCounter);
+		fprintf(fptr, "Process number: %d\n", processCounter);
 		for(int resourceCounter = 0; resourceCounter < RESOURCE_TABLE_SIZE; resourceCounter++) {
-			printf("Resource %d: available: %d requested by process pid %d: %d\n", resourceCounter, availableVector[resourceCounter], processTable[processCounter].pid, requestMatrix[processCounter][resourceCounter]);
-			if(availableVector[resourceCounter] - requestMatrix[processCounter][resourceCounter] >= 0) { //TODO single process deadlock
+			fprintf(fptr, "Resource %d: available: %d requested by process pid %d: %d\n", resourceCounter, availableVector[resourceCounter], processTable[processCounter].pid, requestMatrix[processCounter][resourceCounter]);
+			if(availableVector[resourceCounter] - requestMatrix[processCounter][resourceCounter] >= 0) {
 				satisfyRequest = 1;
 			}
 			else {
 				satisfyRequest = 0;
-				//printf("MASTER: Unable to satisfy the request of process %d\n", processCounter); //TODO delete
 				break;
 			}
 		}
 		//If possible, then "let the process play out" and release its resources
 		if(satisfyRequest) {
-			printf("MASTER: Simulating the release of resources held by process %d\n", processCounter);//TODO delete
+			fprintf(fptr, "MASTER: Simulating the release of resources held by process %d\n", processCounter);//TODO delete
 			for(int resourceCounter = 0; resourceCounter < RESOURCE_TABLE_SIZE; resourceCounter++) {
 				availableVector[resourceCounter] += allocationMatrix[processCounter][resourceCounter];
 			}
@@ -557,13 +549,13 @@ int runDeadlockDetection() {
 	for(int count = 0; count < processTableSize; count++) {
 		if(finished[count] != 1) {
 			deadlockDetected = 1;
-			printf("MASTER: Deadlock detected. Taking measures to correct.\n");
+			fprintf(fptr, "MASTER: Deadlock detected. Taking measures to correct.\n");
 			break;
 		}
 	}
 
 	if(!deadlockDetected) 
-		printf("MASTER: No deadlock detected. Continuing.\n");
+		fprintf(fptr, "MASTER: No deadlock detected. Continuing.\n");
 
 	return deadlockDetected;
 }
@@ -633,7 +625,7 @@ void launchChild(int maxSimulChildren, int launchInterval, int *lastLaunchTime) 
 		else {
 			initializePCB(newChild);
 			*lastLaunchTime = simulatedClock[1];
-			printf("MASTER: Launching new child pid %d.\n", newChild);
+			fprintf(fptr, "MASTER: Launching new child pid %d.\n", newChild);
 			runningChildren++;
 		}
 	}
@@ -728,8 +720,10 @@ void outputProcessTable() {
 
 void outputResourceTable() {
 	printf("%s\n%-15s %-15s %-15s\n", "Resource Table:", "Entry", "Available", "Total");
+	fprintf(fptr, "%s\n%-15s %-15s %-15s\n", "Resource Table:", "Entry", "Available", "Total");
 	for(int count = 0; count < RESOURCE_TABLE_SIZE; count++) {
 		printf("%-15d %-15d %-15d\n", count, resourceTable[count].availableInstances, resourceTable[count].totalInstances);
+		fprintf(fptr, "%-15d %-15d %-15d\n", count, resourceTable[count].availableInstances, resourceTable[count].totalInstances);
 	}
 }
 
