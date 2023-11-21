@@ -14,7 +14,7 @@
 #define MAX_CHILDREN 18
 #define ONE_SECOND 1000000000
 #define HALF_SECOND 500000000
-#define STANDARD_CLOCK_INCREMENT 1000000
+#define STANDARD_CLOCK_INCREMENT 100000
 #define RESOURCE_TABLE_SIZE 10
 
 typedef struct msgBuffer {
@@ -249,7 +249,7 @@ int main(int argc, char** argv) {
 		launchChild(simul, timelimit, lastLaunchTime);
 
 		//Try to grant any outstanding requests 
-		//checkOutstandingRequests();//TODO
+		checkOutstandingRequests();//TODO
 
 		//checks to see if a message has been sent to parent
 		//if so, then it takes proper action
