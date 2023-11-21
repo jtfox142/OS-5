@@ -303,7 +303,6 @@ void checkOutstandingRequests() {
 				break;
 			}
 		}
-		processTable->requestVector
 		printf("MASTER: Process %d could not be awoken. Last requested resource %d, which has %d available instances\n", currentPid, lastRequest, availableInstances);
 	}
 
