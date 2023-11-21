@@ -497,6 +497,8 @@ int runDeadlockDetection() {
 		}
 	}
 
+
+
 	int satisfyRequest;
 	int finished[processTableSize];
 
@@ -512,12 +514,13 @@ int runDeadlockDetection() {
 			continue;
 
 		for(int resourceCounter = 0; resourceCounter < RESOURCE_TABLE_SIZE; resourceCounter++) {
+			printf("Resource %D: available: %d requested by process %d: %d", resourceCounter, availableVector[resourceCounter], processCounter, requestMatrix[processCounter][resourceCounter]);
 			if(availableVector[resourceCounter] - requestMatrix[processCounter][resourceCounter] >= 0) { //TODO single process deadlock
 				satisfyRequest = 1;
 			}
 			else {
 				satisfyRequest = 0;
-				printf("MASTER: Unable to satisfy the request of process %d\n", processCounter); //TODO delete
+				//printf("MASTER: Unable to satisfy the request of process %d\n", processCounter); //TODO delete
 				break;
 			}
 		}
@@ -772,7 +775,6 @@ void enqueue(struct Queue* queue, int item)
                   % queue->capacity;
     queue->array[queue->rear] = item;
     queue->size = queue->size + 1;
-    printf("%d enqueued to queue\n", item);
 }
  
 // Function to remove an item from queue.
