@@ -294,7 +294,17 @@ void checkOutstandingRequests() {
 			}
 		}
 		enqueue(sleepQueue, currentPid);
-		printf("MASTER: Process %d could not be awoken.\n", currentPid);
+		int lastRequest;
+		int availableInstances;
+		for(int count = 0; count < RESOURCE_TABLE_SIZE; count++) {
+			if(processTable[entry].requestVector[count] >= 1) {
+				lastRequest = processTable[entry].requestVector[count];
+				availableInstances = resourceTable[count].availableInstances;
+				break;
+			}
+		}
+		processTable->requestVector
+		printf("MASTER: Process %d could not be awoken. Last requested resource %d, which has %d available instances\n", currentPid, lastRequest, availableInstances);
 	}
 
 }
