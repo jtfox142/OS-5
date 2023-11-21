@@ -184,6 +184,8 @@ int main(int argc, char** argv) {
 
 	int timer;
 	timer = simulatedClock[1];
+	int aliveTime;
+	aliveTime = simulatedClock[0];
 	int terminate;
 	terminate = 0;
 
@@ -194,7 +196,8 @@ int main(int argc, char** argv) {
 		//terminate. If it has been alloted all requested resources, 
 		//it will terminate naturally. It might also be asked by
 		//OSS to terminate if it is deadlocked.
-		if(simulatedClock[0] > 0 && simulatedClock[1] - timer >= MILLISECOND_TIMER) {
+		aliveTime = simulatedClock[0] - aliveTime;
+		if(aliveTime >= 1 && simulatedClock[1] - timer >= MILLISECOND_TIMER) {
 			terminate = checkForTermination(resourceTracker);
 			timer = simulatedClock[1];
 
