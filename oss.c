@@ -426,7 +426,7 @@ void grantResource(pid_t childPid, int resourceNumber, int processNumber) {
 		printf("MASTER: Requested instance of resource %d to child pid %d has been denied.\n", resourceNumber, childPid);
 		sendMessage(childPid, 0);
 		int entry = findTableIndex(childPid);
-		processTable[entry].blocked = resourceNumber;
+		processTable[entry].blocked = resourceNumber + 1;
 		enqueue(sleepQueue, childPid);
 	}
 }
