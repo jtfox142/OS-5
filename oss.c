@@ -408,6 +408,10 @@ int release(pid_t childPid, int resourceNumber) {
 //After, it attempts to grant any remaining requests in a first process in, first process out order
 //NOTE: I know that this is not a very equitable way to do this, and it could lead to starvation.
 void grantResource(pid_t childPid, int resourceNumber, int processNumber) {
+	//I have a bug where dead processes are granted resources.
+	//This is a bad fix, but it is a fix.
+	if(!processTable[processNumber].occupied) 
+		return;
 	buf.mtype = childPid;
 	if(resourceTable[resourceNumber].availableInstances > 0) {
 		processTable[processNumber].allocationVector[resourceNumber] += 1;
