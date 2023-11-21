@@ -453,15 +453,18 @@ int runDeadlockDetection() {
 			continue;
 
 		for(int resourceCounter = 0; resourceCounter < RESOURCE_TABLE_SIZE; resourceCounter++) {
-			if(availableVector[resourceCounter] - requestMatrix[processCounter][resourceCounter] >= 0)
+			if(availableVector[resourceCounter] - requestMatrix[processCounter][resourceCounter] >= 0) {
 				satisfyRequest = 1;
+			}
 			else {
 				satisfyRequest = 0;
+				printf("MASTER: Unable to satisfy the request of process %d\n", processCounter); //TODO delete
 				break;
 			}
 		}
 		//If possible, then "let the process play out" and release its resources
 		if(satisfyRequest) {
+			printf("MASTER: Simulating the release of resources held by process %d\n", processCounter);//TODO delete
 			for(int resourceCounter = 0; resourceCounter < RESOURCE_TABLE_SIZE; resourceCounter++) {
 				availableVector[resourceCounter] += allocationMatrix[processCounter][resourceCounter];
 			}
