@@ -91,6 +91,7 @@ void checkForMessages();
 void updateTable(pid_t process, msgBuffer rcvbuf);
 void nonblockWait();
 void startInitialProcesses(int initialChildren);
+void checkOutstandingRequests();
 
 //Program end functions
 void terminateProgram(int signum);
@@ -273,7 +274,7 @@ int main(int argc, char** argv) {
 
 //Checks to see if it can wake up any sleeping processes
 //Rechecks if the resource that a worker requested is now available
-void grantOutstandingRequests() {
+void checkOutstandingRequests() {
 	if(isEmpty(sleepQueue))
 		return;
 
