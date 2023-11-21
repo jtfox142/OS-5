@@ -526,9 +526,9 @@ int runDeadlockDetection() {
 		if(finished[processCounter])
 			continue;
 
-		printf("Process: %d\n", processCounter);
+		printf("Process number: %d\n", processCounter);
 		for(int resourceCounter = 0; resourceCounter < RESOURCE_TABLE_SIZE; resourceCounter++) {
-			printf("Resource %d: available: %d requested by process %d: %d\n", resourceCounter, availableVector[resourceCounter], processCounter, requestMatrix[processCounter][resourceCounter]);
+			printf("Resource %d: available: %d requested by process pid %d: %d\n", resourceCounter, availableVector[resourceCounter], processTable[processCounter].pid, requestMatrix[processCounter][resourceCounter]);
 			if(availableVector[resourceCounter] - requestMatrix[processCounter][resourceCounter] >= 0) { //TODO single process deadlock
 				satisfyRequest = 1;
 			}
