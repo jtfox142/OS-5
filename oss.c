@@ -73,7 +73,6 @@ void help();
 void initializeProcessTable();
 void startInitialProcesses(int initialChildren);
 void initializePCB(pid_t pid);
-void processEnded(int pidNumber);
 void outputProcessTable();
 
 //OSS functions
@@ -114,7 +113,7 @@ void checkTime(int *outputTimer, int *deadlockDetectionTimer);
 void takeAction(pid_t childPid, int msgData);
 void childTerminated(pid_t terminatedChild);
 void sendMessage(pid_t childPid, int msg);
-void terminateProcess();
+void deadlockTermination();
 
 /* 
 
@@ -291,11 +290,15 @@ void nonblockWait() {
 }
 
 void childTerminated(pid_t terminatedChild) {
+	int entry = findTableIndex(terminatedChild);
 	for(int count = 0; count < RESOURCE_TABLE_SIZE; count++) {
 		while(release(terminatedChild, count));
+		processTable[entry].requestVector[count] = 0;
 	}
+	processTable[entry].occupied = 0;
+	//TODO reset checkChildren to test for occupied status and do away with runningChildren
+	runningChildren--;
 
-	processEnded(terminatedChild);//TODO reset checkChildren to test for occupied status and do away with runningChildren
 	printf("MASTER: Child pid %d has terminated and its resources have been released.\n", terminatedChild);
 	//TODO: output to logfile that child terminated
 }
@@ -395,13 +398,13 @@ void checkTime(int *outputTimer, int *deadlockDetectionTimer) {
 		//Terminate processes until deadlock is gone, in order of highest resource allocation. 
 		//Terminates processes using the most resources first
 		while(runDeadlockDetection()) {
-			terminateProcess();
+			deadlockTermination();
 		}
 	}
 }
 
 //Kills the most resource-intensive worker process
-void terminateProcess() {
+void deadlockTermination() {
 	int heaviestProcess; //records the entry number of the process using the most resources
 	int currentResourcesUsed = 0;
 	int mostResourcesUsed = 0;
@@ -639,18 +642,6 @@ void sighandler(int signum) {
 	printf("\nCaught signal %d\n", signum);
 	terminateProgram(signum);
 	printf("If you're seeing this, then bad things have happened.\n");
-}
-
-//updates the PCB of a process that has ended
-void processEnded(int pidNumber) {
-	int i;
-	for(i = 0; i < processTableSize; i++) {
-		if(processTable[i].pid == pidNumber) {
-			processTable[i].occupied = 0;
-			runningChildren--;
-			return;
-		}
-	}
 }
 
 void outputProcessTable() {
