@@ -44,6 +44,13 @@ struct resource {
 	*/
 };
 
+//QUEUE CODE ORIGINALLY TAKEN FROM https://www.geeksforgeeks.org/introduction-and-array-implementation-of-queue/
+struct Queue {
+    int front, rear, size;
+    unsigned capacity;
+    int *array;
+};
+
 // GLOBAL VARIABLES
 //For storing each child's PCB. Memory is allocated in main
 struct PCB *processTable;
@@ -63,6 +70,8 @@ int shm_id;
 int *simulatedClock;
 //message buffer for passing messages
 msgBuffer buf;
+//Queue for keeping track of blocked (sleeping) processes
+struct Queue *sleepQueue;
 
 // FUNCTION PROTOTYPES
 
@@ -99,10 +108,14 @@ int release(pid_t childPid, int resourceNumber);
 void outputResourceTable();
 int runDeadlockDetection();
 
-//Queue functions
-int addItemToQueue(pid_t *queue, pid_t itemToAdd);
-int removeItemFromQueue(pid_t *queue, pid_t itemToRemove);
-void initializeQueue(pid_t *queue);
+//Queue functions ORIGINALLY TAKEN FROM https://www.geeksforgeeks.org/introduction-and-array-implementation-of-queue/
+struct Queue* createQueue(unsigned capacity);
+int isFull(struct Queue* queue);
+int isEmpty(struct Queue* queue);
+void enqueue(struct Queue* queue, int item);
+int dequeue(struct Queue* queue);
+int front(struct Queue* queue);
+int rear(struct Queue* queue);
 
 //Helper functions
 int checkChildren(int maxSimulChildren);
@@ -118,8 +131,10 @@ void deadlockTermination();
 /* 
 
 TODO
-* It is working! Deadlock is being created! But the clock is stopping i think. Once both processes go to sleep,
-progress is halted. deadlockDetection is not running. Fix this :) 
+* It is working! Deadlock is being created! And it is being fixed! Good job!
+* finish grantOutstandingRequests. This should allow processes to start again after deadlock is fixed :)
+* Upon completion of the above, the program should terminate when: 1. all the workers terminate themselves or 
+	2. all workers have been killed by the deadlock detection algo
 * Limit output to 10k lines, change printfs to fprintfs
 
 */
@@ -220,6 +235,8 @@ int main(int argc, char** argv) {
 	int *lastLaunchTime = malloc(sizeof(int));
 	*lastLaunchTime = 0;
 
+	sleepQueue = createQueue(processTableSize);
+
 	//stillChildrenToLaunch checks if we have initialized the final PCB yet. 
 	//childrenInSystem checks if any PCBs remain occupied
 	while(stillChildrenToLaunch() || childrenInSystem()) {
@@ -253,6 +270,33 @@ int main(int argc, char** argv) {
 }
 
 // FUNCTION DEFINITIONS
+
+//Checks to see if it can wake up any sleeping processes
+//Rechecks if the resource that a worker requested is now available
+void grantOutstandingRequests() {
+	if(isEmpty(sleepQueue))
+		return;
+
+	int sleepQueueSize = sleepQueue->size;
+	for(int processCounter = 0; processCounter < sleepQueueSize; processCounter++) {
+		int currentPid = dequeue(sleepQueue);
+		int entry = findTableIndex(currentPid);
+
+		for(int resourceCounter = 0; resourceCounter < RESOURCE_TABLE_SIZE; resourceCounter++) {
+			if(!processTable[entry].requestVector[resourceCounter])
+				continue;
+			
+			if(resourceTable[resourceCounter].availableInstances > 0) {
+				printf("MASTER: Waking process %d\n", currentPid);
+				grantResource(currentPid, resourceCounter, processCounter);
+				return;
+			}
+		}
+		enqueue(sleepQueue, currentPid);
+		printf("MASTER: Process %d could not be awoken.\n", currentPid);
+	}
+
+}
 
 void startInitialProcesses(int initialChildren) {
 	int lowerValue;
@@ -296,6 +340,7 @@ void childTerminated(pid_t terminatedChild) {
 		processTable[entry].requestVector[count] = 0;
 	}
 	processTable[entry].occupied = 0;
+	processTable[entry].blocked = 0;
 	//TODO reset checkChildren to test for occupied status and do away with runningChildren
 	runningChildren--;
 
@@ -371,6 +416,7 @@ void grantResource(pid_t childPid, int resourceNumber, int processNumber) {
 		sendMessage(childPid, 0);
 		int entry = findTableIndex(childPid);
 		processTable[entry].blocked = 1;
+		enqueue(sleepQueue, childPid);
 	}
 }
 
@@ -426,7 +472,6 @@ void deadlockTermination() {
 }
 
 //Returns the entry number of the most resource-intensive process if deadlock is detected, returns 0 otherwise
-//TODO runs the algo on ALL process, living or dead, so it will continually detect deadlock. don't do that.
 int runDeadlockDetection() {
 	printf("MASTER: Running deadlock detection algorithm at time %d.%d\n", simulatedClock[0], simulatedClock[1]);
 	int requestMatrix[processTableSize][RESOURCE_TABLE_SIZE];
@@ -675,31 +720,76 @@ void receivingOutput(int chldNum, int chldPid, int systemClock[2], msgBuffer rcv
 	}
 }
 
-int addItemToQueue(pid_t *queue, pid_t itemToAdd) {
-	for(int count = 0; count < processTableSize; count++) {
-		if(queue[count] == -1) {
-			queue[count] = itemToAdd;
-			return 1;
-		}
-	}
-	printf("queue full\n");
-	return 0;
-}
 
-int removeItemFromQueue(pid_t *queue, pid_t itemToRemove) {
-	for(int count = 0; count < processTableSize; count++) {
-		if(queue[count] == itemToRemove) {
-			queue[count] = -1;
-			return 1;
-		}
-	}
-	printf("pid not found in queue\n");
-	return 0;
+//QUEUE CODE TAKEN FROM https://www.geeksforgeeks.org/introduction-and-array-implementation-of-queue/
+// function to create a queue
+// of given capacity.
+// It initializes size of queue as 0
+struct Queue* createQueue(unsigned capacity)
+{
+    struct Queue* queue = (struct Queue*)malloc(
+        sizeof(struct Queue));
+    queue->capacity = capacity;
+    queue->front = queue->size = 0;
+ 
+    // This is important, see the enqueue
+    queue->rear = capacity - 1;
+    queue->array = (int*)malloc(
+        queue->capacity * sizeof(int));
+    return queue;
 }
-
-void initializeQueue(pid_t *queue) {
-	int count;
-	for(count = 0; count < processTableSize; count++) {
-		queue[count] = -1;
-	}
+ 
+// Queue is full when size becomes
+// equal to the capacity
+int isFull(struct Queue* queue)
+{
+    return (queue->size == queue->capacity);
+}
+ 
+// Queue is empty when size is 0
+int isEmpty(struct Queue* queue)
+{
+    return (queue->size == 0);
+}
+ 
+// Function to add an item to the queue.
+// It changes rear and size
+void enqueue(struct Queue* queue, int item)
+{
+    if (isFull(queue))
+        return;
+    queue->rear = (queue->rear + 1)
+                  % queue->capacity;
+    queue->array[queue->rear] = item;
+    queue->size = queue->size + 1;
+    printf("%d enqueued to queue\n", item);
+}
+ 
+// Function to remove an item from queue.
+// It changes front and size
+int dequeue(struct Queue* queue)
+{
+    if (isEmpty(queue))
+        return 0;
+    int item = queue->array[queue->front];
+    queue->front = (queue->front + 1)
+                   % queue->capacity;
+    queue->size = queue->size - 1;
+    return item;
+}
+ 
+// Function to get front of queue
+int front(struct Queue* queue)
+{
+    if (isEmpty(queue))
+        return 0;
+    return queue->array[queue->front];
+}
+ 
+// Function to get rear of queue
+int rear(struct Queue* queue)
+{
+    if (isEmpty(queue))
+        return 0;
+    return queue->array[queue->rear];
 }

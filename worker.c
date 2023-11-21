@@ -179,7 +179,6 @@ int main(int argc, char** argv) {
 		If a 1 is received, then the requested resource has been granted and the process continues.
 		If a 0 is received, then the requested resource has not been granted and the process
 		goes to sleep until it can receive that resource, at which point it is sent -1, or it is killed.
-		If a -1 is received, the child is awoken.
 
 	*/
 
@@ -269,8 +268,10 @@ int main(int argc, char** argv) {
 					printf("msgrcv failure in child %d\n", myPid);
 					exit(1);
 				}
-			}while(rcvbuf.intData != -1);
+			}while(rcvbuf.intData != 1);
 			printf("WORKER %d: Waking up.\n", myPid);
+			removeRequest(resourceTracker, buf.intData);
+			addAllocation(resourceTracker, buf.intData);
 		}
 	}
 
