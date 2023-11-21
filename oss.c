@@ -382,14 +382,15 @@ void sendMessage(pid_t childPid, int msg) {
 }
 
 void checkTime(int *outputTimer, int *deadlockDetectionTimer) {
-	if(simulatedClock[1] - *outputTimer >= HALF_SECOND){
+	if(abs(simulatedClock[1] - *outputTimer) >= HALF_SECOND){
 			*outputTimer = simulatedClock[1];
+			*deadlockDetectionTimer += 1;
 			printf("\nOSS PID:%d SysClockS:%d SysClockNano:%d\n", getpid(), simulatedClock[0], simulatedClock[1]); 
 			outputProcessTable();
 			outputResourceTable();
 	}
-	if(simulatedClock[0] - *deadlockDetectionTimer >= ONE_SECOND) {
-		*deadlockDetectionTimer = simulatedClock[0];
+	if(2 == *deadlockDetectionTimer) {
+		*deadlockDetectionTimer = 0;
 
 		//Terminate processes until deadlock is gone, in order of highest resource allocation. 
 		//Terminates processes using the most resources first
@@ -398,7 +399,6 @@ void checkTime(int *outputTimer, int *deadlockDetectionTimer) {
 			terminateProcess();
 		}
 	}
-	printf("MASTER: Exiting checkTime()\n");
 }
 
 //Kills the most resource-intensive worker process
