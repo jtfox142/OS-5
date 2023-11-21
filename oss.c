@@ -119,8 +119,9 @@ void terminateProcess();
 /* 
 
 TODO
-* Start deadlock detection algo (just alert and end)
-* Finish deadlock detection algo (decide which processes to terminate)
+* It is working! Deadlock is being created! But the clock is stopping i think. Once both processes go to sleep,
+progress is halted. deadlockDetection is not running. Fix this :) 
+* Limit output to 10k lines, change printfs to fprintfs
 
 */
 
@@ -418,6 +419,7 @@ void terminateProcess() {
 	pid_t workerToTerminate = findTableIndex(heaviestProcess);
 	printf("MASTER: Killing child pid %d to try and correct deadlock.\n", workerToTerminate);
 	kill(workerToTerminate, 3);
+	processEnded(workerToTerminate);
 }
 
 //Returns the entry number of the most resource-intensive process if deadlock is detected, returns 0 otherwise
@@ -638,6 +640,7 @@ void processEnded(int pidNumber) {
 	for(i = 0; i < processTableSize; i++) {
 		if(processTable[i].pid == pidNumber) {
 			processTable[i].occupied = 0;
+			runningChildren--;
 			return;
 		}
 	}
