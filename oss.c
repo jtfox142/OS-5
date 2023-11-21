@@ -126,7 +126,7 @@ int findTableIndex(pid_t pid);
 void checkTime(int *outputTimer, int *deadlockDetectionTimer);
 void takeAction(pid_t childPid, int msgData);
 void childTerminated(pid_t terminatedChild);
-void sendMessage(pid_t childPid, int msg);
+void sendMessage(pid_t childPid, int msg, int output);
 void deadlockTermination();
 
 /* 
@@ -398,7 +398,7 @@ int release(pid_t childPid, int resourceNumber, int output) {
 		if(output)
 			printf("MASTER: Child pid %d has released an instance of resource %d\n", childPid, resourceNumber);
 		resourceTable[resourceNumber].availableInstances += 1;
-		sendMessage(childPid, 2);
+		sendMessage(childPid, 2, output);
 		return 1;
 	}
 	if(output)
@@ -423,21 +423,22 @@ void grantResource(pid_t childPid, int resourceNumber, int processNumber) {
 		resourceTable[resourceNumber].availableInstances -= 1;
 		
 		printf("MASTER: Requested instance of resource %d to child pid %d has been granted.\n", resourceNumber, childPid);
-		sendMessage(childPid, 1);
+		sendMessage(childPid, 1, 1);
 	}
 	else {
 		printf("MASTER: Requested instance of resource %d to child pid %d has been denied.\n", resourceNumber, childPid);
-		sendMessage(childPid, 0);
+		sendMessage(childPid, 0, 1);
 		int entry = findTableIndex(childPid);
 		processTable[entry].blocked = resourceNumber + 1;
 		enqueue(sleepQueue, childPid);
 	}
 }
 
-void sendMessage(pid_t childPid, int msg) {
+void sendMessage(pid_t childPid, int msg, int output) {
 	buf.intData = msg;
 	buf.mtype = childPid;
-	printf("MASTER: Sending message of %d to child pid %d\n", msg, childPid);
+	if(output)
+		printf("MASTER: Sending message of %d to child pid %d\n", msg, childPid);
 	if(msgsnd(msqid, &buf, sizeof(msgBuffer), 0) == -1) {
 			perror("msgsnd to child failed\n");
 			terminateProgram(6);
