@@ -294,6 +294,16 @@ void checkOutstandingRequests() {
 			}
 		}
 		enqueue(sleepQueue, currentPid);
+		int lastRequest;
+		int availableInstances;
+		for(int count = 0; count < RESOURCE_TABLE_SIZE; count++) {
+			if(processTable[entry].requestVector[count] >= 1) {
+				lastRequest = processTable[entry].requestVector[count];
+				availableInstances = resourceTable[count].availableInstances;
+				break;
+			}
+		}
+		printf("MASTER: Process %d could not be awoken.\n", currentPid);
 	}
 
 }
