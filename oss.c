@@ -279,6 +279,16 @@ void checkOutstandingRequests() {
 		return;
 
 	int sleepQueueSize = sleepQueue->size;
+	if(1 == sleepQueueSize) {
+		int lastRemainingProcess = dequeue(sleepQueue);
+		int entry = findTableIndex(lastRemainingProcess);
+		printf("MASTER: Last remaining process %d is deadlocked. Request vector:\n", lastRemainingProcess);
+		for(int count = 0; count < RESOURCE_TABLE_SIZE; count++) {
+			printf("Resource %d: %d\n", count, processTable[entry].requestVector[count]);
+		}
+		terminateProgram(3);
+	}
+
 	for(int processCounter = 0; processCounter < sleepQueueSize; processCounter++) {
 		int currentPid = dequeue(sleepQueue);
 		int entry = findTableIndex(currentPid);
