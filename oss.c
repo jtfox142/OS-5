@@ -296,7 +296,6 @@ void childTerminated(pid_t terminatedChild) {
 	}
 
 	processEnded(terminatedChild);//TODO reset checkChildren to test for occupied status and do away with runningChildren
-	runningChildren--;
 	printf("MASTER: Child pid %d has terminated and its resources have been released.\n", terminatedChild);
 	//TODO: output to logfile that child terminated
 }
