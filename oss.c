@@ -283,6 +283,10 @@ void checkOutstandingRequests() {
 		int currentPid = dequeue(sleepQueue);
 		int entry = findTableIndex(currentPid);
 
+		//Should never happen, but just in case
+		if(!processTable[entry].occupied)
+			continue;
+
 		for(int resourceCounter = 0; resourceCounter < RESOURCE_TABLE_SIZE; resourceCounter++) {
 			if(!processTable[entry].requestVector[resourceCounter])
 				continue;
@@ -295,15 +299,6 @@ void checkOutstandingRequests() {
 			}
 		}
 		enqueue(sleepQueue, currentPid);
-		int lastRequest;
-		int availableInstances;
-		for(int count = 0; count < RESOURCE_TABLE_SIZE; count++) {
-			if(processTable[entry].requestVector[count] >= 1) {
-				lastRequest = processTable[entry].requestVector[count];
-				availableInstances = resourceTable[count].availableInstances;
-				break;
-			}
-		}
 		printf("MASTER: Process %d could not be awoken.\n", currentPid);
 	}
 
@@ -344,6 +339,7 @@ void nonblockWait() {
 	childTerminated(terminatedChild);
 }
 
+//TODO If a child is terminated and then its request is granted, then it can have a request of -1
 void childTerminated(pid_t terminatedChild) {
 	int entry = findTableIndex(terminatedChild);
 	for(int count = 0; count < RESOURCE_TABLE_SIZE; count++) {
