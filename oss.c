@@ -294,7 +294,7 @@ void checkOutstandingRequests() {
 			if(resourceTable[resourceCounter].availableInstances > 0) {
 				printf("MASTER: Waking process %d\n", currentPid);
 				processTable[entry].blocked = 0;
-				grantResource(currentPid, resourceCounter, processCounter);
+				grantResource(currentPid, resourceCounter, entry);
 				return;
 			}
 		}
@@ -412,6 +412,7 @@ void grantResource(pid_t childPid, int resourceNumber, int processNumber) {
 	//This is a bad fix, but it is a fix.
 	if(!processTable[processNumber].occupied) 
 		return;
+
 	buf.mtype = childPid;
 	if(resourceTable[resourceNumber].availableInstances > 0) {
 		processTable[processNumber].allocationVector[resourceNumber] += 1;
